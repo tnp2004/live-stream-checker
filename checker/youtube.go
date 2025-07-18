@@ -15,7 +15,7 @@ type youtube struct {
 	url string
 }
 
-func NewYoutube(url string) youtube {
+func Youtube(url string) youtube {
 	return youtube{url}
 }
 

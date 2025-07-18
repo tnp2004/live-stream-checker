@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	youtube := checker.NewYoutube("https://www.youtube.com/@TEDx")
+	youtube := checker.Youtube("https://www.youtube.com/@TEDx")
 	isLive, err := youtube.IsLive()
 	if err != nil {
 		return
