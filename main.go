@@ -3,18 +3,13 @@ package main
 import (
 	"log"
 
+	"github.com/joho/godotenv"
 	"github.com/tnp2004/live-stream-checker/checker"
 )
 
 func main() {
-	youtube := checker.Youtube("https://www.youtube.com/@TEDx")
-	isLive, err := youtube.IsLive()
-	if err != nil {
-		return
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
 	}
-	if !isLive {
-		log.Println("Not Live . . .")
-		return
-	}
-	log.Println("Live . . .")
+	checker.Twitch("https://www.twitch.tv/charmer_cham/clip/GiantIntelligentKiwiDatSheffy-kHLWQbe2iYBLsug3").IsLive()
 }
