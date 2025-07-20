@@ -11,16 +11,14 @@ import (
 const FIND_CHANNEL_ID_REGEX = `https:\/\/www\.youtube\.com\/channel\/([a-zA-Z0-9_-]+)`
 const CHECK_LIVE_REGEX = `<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']`
 
-type youtube struct {
-	url string
+type youtube struct{}
+
+func NewYoutube() *youtube {
+	return &youtube{}
 }
 
-func Youtube(url string) youtube {
-	return youtube{url}
-}
-
-func (yt youtube) IsLive() (bool, error) {
-	pageSource, err := yt.getPageSource(yt.url)
+func (yt youtube) IsLive(url string) (bool, error) {
+	pageSource, err := yt.getPageSource(url)
 	if err != nil {
 		return false, err
 	}
