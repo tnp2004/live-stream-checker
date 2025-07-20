@@ -3,6 +3,7 @@ package checker
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -38,13 +39,13 @@ func (yt youtube) IsLive(url string) (bool, error) {
 func (yt youtube) getPageSource(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", fmt.Errorf("get page source from %s failed", url)
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", fmt.Errorf("read response body failed")
 	}
 	pageSource := string(body)
@@ -56,7 +57,7 @@ func (yt youtube) findChannelID(pageSource string) (string, error) {
 	regex := regexp.MustCompile(FIND_CHANNEL_ID_REGEX)
 	match := regex.FindStringSubmatch(pageSource)
 	if match == nil {
-		fmt.Println("Error: channel id not found")
+		log.Println("Error: channel id not found")
 		return "", fmt.Errorf("channel id not found")
 	}
 	channelID := match[1]
@@ -68,7 +69,7 @@ func (yt youtube) checkLive(pageSource string) (bool, error) {
 	regex := regexp.MustCompile(CHECK_LIVE_REGEX)
 	match := regex.FindStringSubmatch(pageSource)
 	if match == nil {
-		fmt.Println("Error: canonical not found")
+		log.Println("Error: canonical not found")
 		return false, fmt.Errorf("check Live failed")
 	}
 	liveUrl := match[1]

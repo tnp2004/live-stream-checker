@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -55,7 +56,7 @@ func (tw twitch) checkLive(channelName string) (bool, error) {
 	url := fmt.Sprintf("%s%s", LIVE_CHECK_URL, channelName)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		log.Println("Error: ", err)
 		return false, err
 	}
 	bearerToken := fmt.Sprintf("Bearer %s", tw.accessToken)
@@ -64,23 +65,23 @@ func (tw twitch) checkLive(channelName string) (bool, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		log.Println("Error: ", err)
 		return false, err
 	}
 	if resp.StatusCode != 200 {
-		fmt.Printf("Error: http status %s", resp.Status)
+		log.Printf("Error: http status %s", resp.Status)
 		return false, fmt.Errorf("checking live error")
 	}
 	defer resp.Body.Close()
 
 	byteBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return false, err
 	}
 	respBody := new(liveStatus)
 	if err := json.Unmarshal(byteBody, &respBody); err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return false, err
 	}
 
@@ -107,24 +108,24 @@ func (tw *twitch) getAccessToken() error {
 func requestAccessToken(clientID, clientSecret, grantType string) (string, error) {
 	body, err := json.Marshal(accessTokenRequestBody{clientID, clientSecret, grantType})
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", err
 	}
 	resp, err := http.Post(TWITCH_REQUEST_TOKEN_URL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", err
 	}
 	defer resp.Body.Close()
 	byteBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", err
 	}
 
 	respBody := new(accessTokenResponseBody)
 	if err := json.Unmarshal(byteBody, &respBody); err != nil {
-		fmt.Println("Error: ", err.Error())
+		log.Println("Error: ", err.Error())
 		return "", err
 	}
 

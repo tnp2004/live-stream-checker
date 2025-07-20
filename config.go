@@ -18,7 +18,7 @@ type Twitch struct {
 
 func loadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error: %s", err.Error())
 	}
 
 	return &Config{
