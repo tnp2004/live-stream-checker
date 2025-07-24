@@ -1,9 +1,11 @@
-package file
+package filereader
 
 import (
 	"encoding/csv"
 	"log"
 	"os"
+
+	"github.com/tnp2004/live-stream-checker/models"
 )
 
 const (
@@ -12,12 +14,7 @@ const (
 	LINK_INDEX             = 1
 )
 
-type ChannelList struct {
-	Platform string
-	Link     string
-}
-
-func ReadChannelList() []*ChannelList {
+func ReadChannelList() []*models.Channel {
 	file, err := os.Open(CHANNEL_LIST_FILE_NAME)
 	if err != nil {
 		log.Fatal("Error: ", err.Error())
@@ -32,9 +29,9 @@ func ReadChannelList() []*ChannelList {
 	// trim header
 	records = records[1:]
 
-	channelList := make([]*ChannelList, 0, len(records))
+	channelList := make([]*models.Channel, 0, len(records))
 	for _, record := range records {
-		ch := &ChannelList{
+		ch := &models.Channel{
 			Platform: record[PLATFORM_INDEX],
 			Link:     record[LINK_INDEX],
 		}
