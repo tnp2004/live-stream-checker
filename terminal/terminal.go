@@ -2,8 +2,16 @@ package terminal
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tnp2004/live-stream-checker/checker"
+	"github.com/tnp2004/live-stream-checker/config"
 	"github.com/tnp2004/live-stream-checker/filereader"
 	"github.com/tnp2004/live-stream-checker/models"
+)
+
+const (
+	ERROR_STATUS   string = "error"
+	LIVE_STATUS    string = "live"
+	OFFLINE_STATUS string = "offline"
 )
 
 const LOG_FILE_NAME = "debug.log"
@@ -14,7 +22,26 @@ type terminalModel struct {
 	height      int
 }
 
+func (m terminalModel) fetchLiveStatus() {
+	cfg := config.LoadConfig()
+	for _, ch := range m.channelList {
+		checker := checker.New(ch, cfg)
+		liveStatus, err := checker.IsLive(ch.Link)
+		if err != nil {
+			ch.Status = ERROR_STATUS
+		}
+
+		if liveStatus {
+			ch.Status = LIVE_STATUS
+		} else {
+			ch.Status = OFFLINE_STATUS
+		}
+	}
+}
+
 func (m terminalModel) Init() tea.Cmd {
+	m.fetchLiveStatus()
+
 	return nil
 }
 

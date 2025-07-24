@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	twitch *Twitch
+	Twitch *Twitch
 }
 
 type Twitch struct {
@@ -16,13 +16,13 @@ type Twitch struct {
 	ClientSecret string
 }
 
-func loadConfig() *Config {
+func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error: %s", err.Error())
 	}
 
 	return &Config{
-		twitch: &Twitch{
+		Twitch: &Twitch{
 			ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 			ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 		},
