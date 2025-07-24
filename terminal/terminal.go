@@ -1,6 +1,9 @@
 package terminal
 
 import (
+	"sync"
+	"time"
+
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,38 +21,53 @@ const (
 
 const LOG_FILE_NAME = "debug.log"
 
+type tickMsg time.Time
+
+var once sync.Once
+
+func tickCmd() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg(t) })
+}
+
 type terminalModel struct {
 	channelList []*models.Channel
 	width       int
 	height      int
 	table       table.Model
+	selected    int
 }
 
 func (m terminalModel) fetchLiveStatus() {
 	cfg := config.LoadConfig()
 	for _, ch := range m.channelList {
 		checker := checker.New(ch, cfg)
-		liveStatus, err := checker.IsLive(ch.Link)
-		if err != nil {
-			ch.Status = ERROR_STATUS
-		}
+		go func() {
+			liveStatus, err := checker.IsLive(ch.Link)
+			if err != nil {
+				ch.Status = ERROR_STATUS
+			}
 
-		if liveStatus {
-			ch.Status = LIVE_STATUS
-		} else {
-			ch.Status = OFFLINE_STATUS
-		}
+			if liveStatus {
+				ch.Status = LIVE_STATUS
+			} else {
+				ch.Status = OFFLINE_STATUS
+			}
+		}()
 	}
 }
 
 func (m terminalModel) Init() tea.Cmd {
-	m.fetchLiveStatus()
-	return nil
+	once.Do(func() { go m.fetchLiveStatus() })
+
+	return tickCmd()
 }
 
 func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case tickMsg:
+		m.table = NewTable(m.channelList)
+		return m, tickCmd()
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -57,10 +75,11 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
+		case tea.KeyCtrlR:
+			m.fetchLiveStatus()
 		}
 	}
 
-	m.table = m.NewTable()
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd
 }
@@ -68,13 +87,13 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m terminalModel) View() string {
 	return lipgloss.NewStyle().
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).Render(m.table.View() + "\n")
+		BorderForeground(lipgloss.Color("240")).Render(m.table.View())
 }
 
-func (m terminalModel) NewTable() table.Model {
-	rows := make([]table.Row, 0, len(m.channelList))
+func NewTable(channelList []*models.Channel) table.Model {
+	rows := make([]table.Row, 0, len(channelList))
 	var longestChName int
-	for _, ch := range m.channelList {
+	for _, ch := range channelList {
 		len := len(ch.Name)
 		if len > longestChName {
 			longestChName = len
@@ -86,7 +105,7 @@ func (m terminalModel) NewTable() table.Model {
 	columns := []table.Column{
 		{Title: "Channel", Width: longestChName},
 		{Title: "Platform", Width: 8},
-		{Title: "Status", Width: 7},
+		{Title: "Status", Width: 11},
 	}
 
 	t := table.New(
@@ -119,7 +138,7 @@ func Run() error {
 	defer file.Close()
 
 	channelList := filereader.ReadChannelList()
-	m := terminalModel{channelList: channelList}
+	m := terminalModel{channelList: channelList, table: NewTable(channelList)}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

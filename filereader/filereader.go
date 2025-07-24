@@ -37,6 +37,7 @@ func ReadChannelList() []*models.Channel {
 			Name:     record[NAME_INDEX],
 			Platform: record[PLATFORM_INDEX],
 			Link:     record[LINK_INDEX],
+			Status:   "checking...",
 		}
 		channelList = append(channelList, ch)
 	}

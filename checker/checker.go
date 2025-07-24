@@ -14,6 +14,7 @@ const (
 )
 
 var (
+	once            sync.Once
 	checkerInstance Checker
 )
 
@@ -27,20 +28,16 @@ type IChecker interface {
 }
 
 func New(ch *models.Channel, cfg *config.Config) IChecker {
-	var once sync.Once
+	once.Do(func() {
+		checkerInstance.youtube = NewYoutube()
+		checkerInstance.twitch = NewTwitch(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
+		log.Println("Created instance")
+	})
 
 	switch ch.Platform {
 	case YOUTUBE:
-		once.Do(func() {
-			checkerInstance.youtube = NewYoutube()
-			log.Println("Created youtube instance")
-		})
 		return checkerInstance.youtube
 	case TWITCH:
-		once.Do(func() {
-			checkerInstance.twitch = NewTwitch(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
-			log.Println("Created twitch instance")
-		})
 		return checkerInstance.twitch
 	}
 
