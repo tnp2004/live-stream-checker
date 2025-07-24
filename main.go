@@ -3,15 +3,11 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tnp2004/live-stream-checker/terminal"
 )
 
-const LOG_FILE_NAME = "debug.log"
-
 func main() {
-	file, err := tea.LogToFile(LOG_FILE_NAME, "debug")
-	if err != nil {
-		log.Fatalf("Error: %s", err)
+	if err := terminal.Run(); err != nil {
+		log.Fatal(err)
 	}
-	defer file.Close()
 }
