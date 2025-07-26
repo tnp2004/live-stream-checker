@@ -34,6 +34,7 @@ type terminalModel struct {
 	width       int
 	height      int
 	table       table.Model
+	selected    int
 }
 
 func (m terminalModel) fetchLiveStatus() {
@@ -66,7 +67,7 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tickMsg:
 		isAllChStatusUpdated := true
-		m.table = NewTable(m.channelList)
+		m.table = NewTable(m.channelList, m.selected)
 		for _, ch := range m.channelList {
 			if ch.Status == "checking..." {
 				isAllChStatusUpdated = false
@@ -89,6 +90,14 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyCtrlR:
 			m.fetchLiveStatus()
+		case tea.KeyUp:
+			if m.selected > 0 {
+				m.selected--
+			}
+		case tea.KeyDown:
+			if m.selected < len(m.channelList)-1 {
+				m.selected++
+			}
 		}
 	}
 
@@ -102,7 +111,7 @@ func (m terminalModel) View() string {
 		BorderForeground(lipgloss.Color("240")).Render(m.table.View())
 }
 
-func NewTable(channelList []*models.Channel) table.Model {
+func NewTable(channelList []*models.Channel, selected int) table.Model {
 	rows := make([]table.Row, 0, len(channelList))
 	var longestChName int
 	for _, ch := range channelList {
@@ -126,6 +135,7 @@ func NewTable(channelList []*models.Channel) table.Model {
 		table.WithFocused(true),
 		table.WithHeight(7),
 	)
+	t.SetCursor(selected)
 
 	s := table.DefaultStyles()
 	s.Header = s.Header.
@@ -150,7 +160,7 @@ func Run() error {
 	defer file.Close()
 
 	channelList := filereader.ReadChannelList()
-	m := terminalModel{channelList: channelList, table: NewTable(channelList)}
+	m := terminalModel{channelList: channelList, table: NewTable(channelList, 0)}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
