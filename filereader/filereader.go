@@ -15,6 +15,7 @@ const (
 )
 
 const CHANNEL_LIST_FILE_NAME = "channel_list.csv"
+const UNCHECKED_STATUS = "unchecked"
 
 func ReadChannelList() []*models.Channel {
 	file, err := os.Open(CHANNEL_LIST_FILE_NAME)
@@ -37,7 +38,7 @@ func ReadChannelList() []*models.Channel {
 			Name:     record[NAME_INDEX],
 			Platform: record[PLATFORM_INDEX],
 			Link:     record[LINK_INDEX],
-			Status:   "checking...",
+			Status:   UNCHECKED_STATUS,
 		}
 		channelList = append(channelList, ch)
 	}
