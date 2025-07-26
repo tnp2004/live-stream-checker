@@ -34,7 +34,6 @@ type terminalModel struct {
 	width       int
 	height      int
 	table       table.Model
-	selected    int
 }
 
 func (m terminalModel) fetchLiveStatus() {
@@ -66,8 +65,21 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tickMsg:
+		isAllChStatusUpdated := true
 		m.table = NewTable(m.channelList)
-		return m, tickCmd()
+		for _, ch := range m.channelList {
+			if ch.Status == "checking..." {
+				isAllChStatusUpdated = false
+			}
+		}
+		var cmd tea.Cmd
+		if isAllChStatusUpdated {
+			cmd = nil
+		} else {
+			cmd = tickCmd()
+		}
+
+		return m, cmd
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
