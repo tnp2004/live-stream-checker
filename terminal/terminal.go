@@ -30,6 +30,7 @@ func tickCmd() tea.Cmd {
 }
 
 type terminalModel struct {
+	config      *config.Config
 	channelList []*models.Channel
 	width       int
 	height      int
@@ -84,7 +85,12 @@ func Run() error {
 	defer file.Close()
 
 	channelList := filereader.ReadChannelList()
-	m := terminalModel{channelList: channelList, table: NewTable(channelList, 0)}
+	config := config.LoadConfig()
+	m := terminalModel{
+		channelList: channelList,
+		table:       NewTable(channelList, 0),
+		config:      config,
+	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
@@ -95,10 +101,9 @@ func Run() error {
 }
 
 func (m terminalModel) fetchLiveStatus() {
-	cfg := config.LoadConfig()
 	for _, ch := range m.channelList {
 		ch.Status = CHECKING_STATUS
-		checker := checker.New(ch, cfg)
+		checker := checker.New(ch, m.config)
 		go func(ch *models.Channel) {
 			liveStatus, err := checker.IsLive(ch.Link)
 			if err != nil {
