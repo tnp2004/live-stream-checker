@@ -58,6 +58,7 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyCtrlR:
 			m.fetchLiveStatus()
+			return m, tickCmd()
 		case tea.KeyUp:
 			if m.selected > 0 {
 				m.selected--
@@ -74,7 +75,7 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m terminalModel) View() string {
-	return DefaultViewStyles().Render(m.table.View())
+	return DefaultViewStyles().Render(m.table.View()) + m.helpView()
 }
 
 func Run() error {
@@ -98,6 +99,10 @@ func Run() error {
 	}
 
 	return nil
+}
+
+func (m terminalModel) helpView() string {
+	return "\n ↑/↓: Navigate \n Ctrl+c,Esc: Quit \n Ctrl+r: recheck"
 }
 
 func (m terminalModel) fetchLiveStatus() {
