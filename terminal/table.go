@@ -38,6 +38,10 @@ func NewTable(channelList []*models.Channel, selected int) table.Model {
 	return t
 }
 
+func (m terminalModel) CheckView() string {
+	return DefaultViewStyles().Render(m.table.View()) + m.checkHelpView()
+}
+
 func (m terminalModel) UpdateTable() (tea.Model, tea.Cmd) {
 	isAllChStatusUpdated := true
 	m.table = NewTable(m.channelList, m.selected)

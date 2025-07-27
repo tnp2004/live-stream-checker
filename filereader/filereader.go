@@ -2,8 +2,10 @@ package filereader
 
 import (
 	"encoding/csv"
+	"fmt"
 	"log"
 	"os"
+	"regexp"
 
 	"github.com/tnp2004/live-stream-checker/models"
 )
@@ -44,4 +46,28 @@ func ReadChannelList() []*models.Channel {
 	}
 
 	return channelList
+}
+
+func AddChannel(name, url string) error {
+	file, err := os.OpenFile(CHANNEL_LIST_FILE_NAME, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		log.Fatal("Error: ", err.Error())
+	}
+	defer file.Close()
+
+	regex := regexp.MustCompile(`(?:https?:\/\/)?(?:www\.)?(youtube|twitch)\.(com|tv)`)
+
+	match := regex.FindStringSubmatch(url)
+	if len(match) < 1 {
+		log.Println("Error: invalid platform")
+		return fmt.Errorf("invalid platform")
+	}
+
+	row := []string{name, match[1], url}
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+	writer.Write(row)
+
+	return nil
 }
