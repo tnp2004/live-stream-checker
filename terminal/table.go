@@ -8,7 +8,7 @@ import (
 
 func NewTable(channelList []*models.Channel, selected int) table.Model {
 	rows := make([]table.Row, 0, len(channelList))
-	var longestChName int
+	longestChName := 7
 	for _, ch := range channelList {
 		len := len(ch.Name)
 		if len > longestChName {
