@@ -29,7 +29,7 @@ type IChecker interface {
 
 func New(ch *models.Channel, cfg *config.Config) IChecker {
 	once.Do(func() {
-		checkerInstance.youtube = NewYoutube()
+		checkerInstance.youtube = NewYoutube(cfg.Google.ApiKey)
 		checkerInstance.twitch = NewTwitch(cfg.Twitch.ClientID, cfg.Twitch.ClientSecret)
 		log.Println("Created instance")
 	})

@@ -1,21 +1,31 @@
 package checker
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 const FIND_CHANNEL_ID_REGEX = `https:\/\/www\.youtube\.com\/channel\/([a-zA-Z0-9_-]+)`
 const CHECK_LIVE_REGEX = `<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']`
 
-type youtube struct{}
+type youtubeResponse struct {
+	Items []struct {
+		Snippet struct {
+			LiveBroadcastContent string `json:"liveBroadcastContent"`
+		} `json:"snippet"`
+	} `json:"items"`
+}
 
-func NewYoutube() *youtube {
-	return &youtube{}
+type youtube struct {
+	apiKey string
+}
+
+func NewYoutube(googleApiKey string) *youtube {
+	return &youtube{googleApiKey}
 }
 
 func (yt youtube) IsLive(url string) (bool, error) {
@@ -27,13 +37,8 @@ func (yt youtube) IsLive(url string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	liveUrl := fmt.Sprintf("https://www.youtube.com/channel/%s/live", channelID)
-	pageSource, err = yt.getPageSource(liveUrl)
-	if err != nil {
-		return false, err
-	}
 
-	return yt.checkLive(pageSource)
+	return yt.checkLive(channelID)
 }
 
 func (yt youtube) getPageSource(url string) (string, error) {
@@ -65,15 +70,30 @@ func (yt youtube) findChannelID(pageSource string) (string, error) {
 	return channelID, nil
 }
 
-func (yt youtube) checkLive(pageSource string) (bool, error) {
-	regex := regexp.MustCompile(CHECK_LIVE_REGEX)
-	match := regex.FindStringSubmatch(pageSource)
-	if match == nil {
-		log.Println("Error: canonical not found")
-		return false, fmt.Errorf("check Live failed")
+func (yt youtube) checkLive(channelID string) (bool, error) {
+	url := fmt.Sprintf(
+		"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=%s&type=video&eventType=live&key=%s",
+		channelID, yt.apiKey,
+	)
+	log.Println(url)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Println("Error: ", err.Error())
+		return false, fmt.Errorf("get data failed")
 	}
-	liveUrl := match[1]
-	if !strings.Contains(liveUrl, "watch") {
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Error: ", err.Error())
+		return false, fmt.Errorf("read response body failed")
+	}
+	respBody := new(youtubeResponse)
+	log.Println(respBody)
+	if err := json.Unmarshal(body, &respBody); err != nil {
+		log.Println("Error: ", err.Error())
+		return false, err
+	}
+	if len(respBody.Items) == 0 || respBody.Items[0].Snippet.LiveBroadcastContent != "live" {
 		return false, nil
 	}
 
