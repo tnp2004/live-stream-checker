@@ -1,4 +1,4 @@
-package filereader
+package fileManager
 
 import (
 	"encoding/csv"
@@ -22,7 +22,17 @@ const UNCHECKED_STATUS = "unchecked"
 func ReadChannelList() []*models.Channel {
 	file, err := os.Open(CHANNEL_LIST_FILE_NAME)
 	if err != nil {
-		log.Fatal("Error: ", err.Error())
+		if os.IsNotExist(err) {
+			if err := createCsvFile(); err != nil {
+				log.Fatal(err)
+			}
+			file, err = os.Open(CHANNEL_LIST_FILE_NAME)
+			if err != nil {
+				log.Fatal("Error: ", err.Error())
+			}
+		} else {
+			log.Fatal("Error: ", err.Error())
+		}
 	}
 	defer file.Close()
 
@@ -46,6 +56,27 @@ func ReadChannelList() []*models.Channel {
 	}
 
 	return channelList
+}
+
+func createCsvFile() error {
+	file, err := os.Create(CHANNEL_LIST_FILE_NAME)
+	if err != nil {
+		log.Println("Error: ", err.Error())
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+
+	err = writer.Write([]string{"name", "platform", "link"})
+	if err != nil {
+		log.Println("Error: ", err.Error())
+		return err
+	}
+
+	writer.Flush()
+
+	return nil
 }
 
 func AddChannel(name, url string) error {

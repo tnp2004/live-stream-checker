@@ -10,7 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tnp2004/live-stream-checker/checker"
 	"github.com/tnp2004/live-stream-checker/config"
-	"github.com/tnp2004/live-stream-checker/filereader"
+	"github.com/tnp2004/live-stream-checker/fileManager"
 	"github.com/tnp2004/live-stream-checker/models"
 )
 
@@ -65,9 +65,9 @@ func (m terminalModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyEnter:
-			_ = filereader.AddChannel(m.addInput.Input[0].Value(), m.addInput.Input[1].Value())
+			_ = fileManager.AddChannel(m.addInput.Input[0].Value(), m.addInput.Input[1].Value())
 			m.stage = CHECK_STAGE
-			channelList := filereader.ReadChannelList()
+			channelList := fileManager.ReadChannelList()
 			m.channelList = append(m.channelList, channelList[len(channelList)-1])
 			m.fetchLiveStatus()
 			m.addInput.ClearInput()
@@ -154,7 +154,7 @@ func Run() error {
 	}
 	defer file.Close()
 
-	channelList := filereader.ReadChannelList()
+	channelList := fileManager.ReadChannelList()
 	config := config.LoadConfig()
 	m := terminalModel{
 		stage:       CHECK_STAGE,

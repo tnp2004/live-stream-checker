@@ -88,7 +88,6 @@ func (yt youtube) checkLive(channelID string) (bool, error) {
 		return false, fmt.Errorf("read response body failed")
 	}
 	respBody := new(youtubeResponse)
-	log.Println(respBody)
 	if err := json.Unmarshal(body, &respBody); err != nil {
 		log.Println("Error: ", err.Error())
 		return false, err
